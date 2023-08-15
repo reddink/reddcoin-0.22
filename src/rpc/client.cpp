@@ -195,6 +195,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
 	{ "staking", 0, "generate" },
 	{ "getinterest", 0, "start" },
 	{ "getinterest", 1, "end" },
+    { "listorphancoinstakes", 1, "count" },
+    { "listorphancoinstakes", 2, "skip" },
 };
 // clang-format on
 

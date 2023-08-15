@@ -1462,6 +1462,29 @@ static void ListTransactions(const CWallet& wallet, const CWalletTx& wtx, int nM
     }
 }
 
+/**
+ * List ophan coinstake transactions based on the given criteria.
+ *
+ * @param  wallet         The wallet.
+ * @param  wtx            The wallet transaction.
+ * @param  nMinDepth      The minimum confirmation depth.
+ * @param  fLong          Whether to include the JSON version of the transaction.
+ * @param  ret            The UniValue into which the result is stored.
+ * @param  filter_ismine  The "is mine" filter flags.
+ * @param  filter_label   Optional label string to filter incoming transactions.
+ */
+static void ListOphanCoinStakes(const CWallet& wallet, const CWalletTx& wtx, int nMinDepth, bool fLong, UniValue& ret, const isminefilter& filter_ismine, const std::string* filter_label) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet)
+{
+    if (wtx.GetDepthInMainChain() <= nMinDepth && !wtx.isAbandoned() && wtx.IsCoinStake()) {
+        UniValue entry(UniValue::VOBJ);
+        entry.pushKV("category", "stake");
+        if (fLong)
+            WalletTxToJSON(wallet.chain(), wtx, entry);
+        entry.pushKV("abandoned", wtx.isAbandoned());
+        ret.push_back(entry);
+    }
+}
+
 static const std::vector<RPCResult> TransactionDescriptionString()
 {
     return{{RPCResult::Type::NUM, "confirmations", "The number of confirmations for the transaction. Negative confirmations means the\n"
@@ -1576,6 +1599,109 @@ static RPCHelpMan listtransactions()
         {
             CWalletTx *const pwtx = (*it).second;
             ListTransactions(*pwallet, *pwtx, 0, true, ret, filter, filter_label);
+            if ((int)ret.size() >= (nCount+nFrom)) break;
+        }
+    }
+
+    // ret is newest to oldest
+
+    if (nFrom > (int)ret.size())
+        nFrom = ret.size();
+    if ((nFrom + nCount) > (int)ret.size())
+        nCount = ret.size() - nFrom;
+
+    const std::vector<UniValue>& txs = ret.getValues();
+    UniValue result{UniValue::VARR};
+    result.push_backV({ txs.rend() - nFrom - nCount, txs.rend() - nFrom }); // Return oldest to newest
+    return result;
+},
+    };
+}
+
+static RPCHelpMan listorphancoinstakes()
+{
+    return RPCHelpMan{"listorphancoinstakes",
+                "\nIf a label name is provided, this will return only incoming transactions paying to addresses with the specified label.\n"
+                "\nReturns up to 'count' most recent orphan transactions skipping the first 'from' transactions.\n",
+                {
+                    {"label|dummy", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "If set, should be a valid label name to return only incoming transactions\n"
+                          "with the specified label, or \"*\" to disable filtering and return all transactions."},
+                    {"count", RPCArg::Type::NUM, RPCArg::Default{20}, "The number of orphan transactions to return"},
+                    {"skip", RPCArg::Type::NUM, RPCArg::Default{0}, "The number of orphan transactions to skip"},
+                },
+                RPCResult{
+                    RPCResult::Type::ARR, "", "",
+                    {
+                        {RPCResult::Type::OBJ, "", "", Cat(Cat<std::vector<RPCResult>>(
+                        {
+                            {RPCResult::Type::STR, "category", "The transaction category.\n"
+                                "\"send\"                  Transactions sent.\n"
+                                "\"receive\"               Non-coinbase transactions received.\n"
+                                "\"generate\"              Coinbase transactions received with more than 100 confirmations.\n"
+                                "\"stake\"                 Coinstake transactions received with more than 100 confirmations.\n"
+                        	"\"immature\"              Coinstake transactions received with 100 or fewer confirmations.\n"
+                                "\"orphan\"                Orphaned coinbase transactions received."},
+                        },
+                        TransactionDescriptionString()),
+                        {
+                            {RPCResult::Type::BOOL, "abandoned", "'true' if the transaction has been abandoned (inputs are respendable). Only available for the \n"
+                                 "'send' category of transactions."},
+                        })},
+                    }
+                },
+                RPCExamples{
+            "\nList the most recent 20 orphan transactions in the systems\n"
+            + HelpExampleCli("listorphancoinstakes", "") +
+            "\nList orphan transactions 100 to 120\n"
+            + HelpExampleCli("listorphancoinstakes", "\"*\" 20 100") +
+            "\nAs a JSON-RPC call\n"
+            + HelpExampleRpc("listorphancoinstakes", "\"*\", 20, 100")
+                },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+{
+    std::shared_ptr<CWallet> const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!pwallet) return NullUniValue;
+
+    // Make sure the results are valid at least up to the most recent block
+    // the user could have gotten from another RPC command prior to now
+    pwallet->BlockUntilSyncedToCurrentChain();
+
+    const std::string* filter_label = nullptr;
+    if (!request.params[0].isNull() && request.params[0].get_str() != "*") {
+        filter_label = &request.params[0].get_str();
+        if (filter_label->empty()) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Label argument must be a valid label name or \"*\".");
+        }
+    }
+    int nCount = 20;
+    if (!request.params[1].isNull())
+        nCount = request.params[1].get_int();
+    int nFrom = 0;
+    if (!request.params[2].isNull())
+        nFrom = request.params[2].get_int();
+    isminefilter filter = ISMINE_SPENDABLE;
+
+    if (ParseIncludeWatchonly(request.params[3], *pwallet)) {
+        filter |= ISMINE_WATCH_ONLY;
+    }
+
+    if (nCount < 0)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative count");
+    if (nFrom < 0)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative from");
+
+    UniValue ret(UniValue::VARR);
+
+    {
+        LOCK(pwallet->cs_wallet);
+
+        const CWallet::TxItems & txOrdered = pwallet->wtxOrdered;
+
+        // iterate backwards until we have nCount items to return:
+        for (CWallet::TxItems::const_reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it)
+        {
+            CWalletTx *const pwtx = (*it).second;
+            ListOphanCoinStakes(*pwallet, *pwtx, 0, true, ret, filter, filter_label);
             if ((int)ret.size() >= (nCount+nFrom)) break;
         }
     }
@@ -4768,6 +4894,7 @@ static const CRPCCommand commands[] =
     { "wallet",             &listdescriptors,                },
     { "wallet",             &listlabels,                     },
     { "wallet",             &listlockunspent,                },
+    { "wallet",             &listorphancoinstakes,               },
     { "wallet",             &listreceivedbyaddress,          },
     { "wallet",             &listreceivedbylabel,            },
     { "wallet",             &listsinceblock,                 },
