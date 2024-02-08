@@ -15,6 +15,7 @@
 #include <interfaces/wallet.h>
 #include <key.h>
 #include <key_io.h>
+#include <node/transaction.h>
 #include <outputtype.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -3345,6 +3346,76 @@ bool CWallet::GetStakeWeightSet(std::set<CInputCoin>& setCoins)
 
     return true;
 }
+
+bool CWallet::GetStakeWeight(uint64_t& nAverageWeight, uint64_t& nTotalWeight)
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
+    // Choose coins to use
+    LOCK(cs_wallet);
+    CAmount nBalance = GetBalance().m_mine_trusted;
+    CAmount nReserveBalance = 0;
+    if (gArgs.IsArgSet("-reservebalance") && !ParseMoney(gArgs.GetArg("-reservebalance", ""), nReserveBalance))
+        return error("CreateCoinStake : invalid reserve balance amount");
+    if (nBalance <= nReserveBalance)
+        return false;
+
+    std::vector<CTransactionRef> vwtxPrev;
+    std::set<CInputCoin> setCoins;
+
+    CAmount nValueIn = 0;
+
+    std::vector<COutput> vAvailableCoins;
+    CCoinControl temp;
+    CoinSelectionParams coin_selection_params;
+    AvailableCoins(vAvailableCoins, &temp);
+    if (!SelectCoins(vAvailableCoins, nBalance - nReserveBalance, setCoins, nValueIn, temp, coin_selection_params))
+        return false;
+    if (setCoins.empty())
+        return false;
+
+    nAverageWeight = nTotalWeight = 0;
+    uint64_t nWeightCount = 0;
+
+    for (const auto& pcoin : setCoins) {
+        CDiskTxPos postx;
+        if (!g_txindex->FindTxPosition(pcoin.outpoint.hash, postx))
+            continue;
+
+        // Read block header
+        CAutoFile file(OpenBlockFile(postx, true), SER_DISK, CLIENT_VERSION);
+        CBlockHeader header;
+        CTransactionRef txRef;
+        try {
+            file >> header;
+            fseek(file.Get(), postx.nTxOffset, SEEK_CUR);
+            file >> txRef;
+        } catch (std::exception& e) {
+            return error("%s() : deserialize or I/O error in GetStakeWeight()", __PRETTY_FUNCTION__);
+        }
+
+        CMutableTransaction tx(*txRef);
+
+        // Deal with transaction timestamp
+        unsigned int nTimeTx = tx.nTime ? tx.nTime : header.GetBlockTime();
+
+        int64_t nTimeWeight = GetCoinAgeWeight((int64_t)nTimeTx, (int64_t)GetTime(), consensusParams);
+        arith_uint512 bnCoinDayWeight = arith_uint512(pcoin.txout.nValue) * nTimeWeight / COIN / (24 * 60 * 60);
+
+        // Weight is greater than zero
+        if (nTimeWeight > 0) {
+            nTotalWeight += bnCoinDayWeight.GetLow64();
+            nWeightCount++;
+        }
+    }
+
+    if (nWeightCount > 0)
+        nAverageWeight = nTotalWeight / nWeightCount;
+
+
+    return true;
+}
+
 
 DescriptorScriptPubKeyMan* CWallet::GetDescriptorScriptPubKeyMan(const WalletDescriptor& desc) const
 {
