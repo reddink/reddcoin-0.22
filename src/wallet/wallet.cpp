@@ -19,6 +19,7 @@
 #include <outputtype.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
+#include <pos/kernel.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <psbt.h>
@@ -3378,21 +3379,19 @@ bool CWallet::GetStakeWeight(uint64_t& nAverageWeight, uint64_t& nTotalWeight)
     uint64_t nWeightCount = 0;
 
     for (const auto& pcoin : setCoins) {
-        CDiskTxPos postx;
-        if (!g_txindex->FindTxPosition(pcoin.outpoint.hash, postx))
-            continue;
 
-        // Read block header
-        CAutoFile file(OpenBlockFile(postx, true), SER_DISK, CLIENT_VERSION);
-        CBlockHeader header;
-        CTransactionRef txRef;
-        try {
-            file >> header;
-            fseek(file.Get(), postx.nTxOffset, SEEK_CUR);
-            file >> txRef;
-        } catch (std::exception& e) {
-            return error("%s() : deserialize or I/O error in GetStakeWeight()", __PRETTY_FUNCTION__);
-        }
+	    uint256 blockHash;
+	    CTransactionRef txRef = GetTransaction(pcoin.outpoint.hash, blockHash);
+	    if (!txRef)
+	        return error("%s() : tx %s not found", __func__, pcoin.outpoint.hash.ToString());
+
+	    CBlock block;
+	    CBlockHeader header;
+	    if (HaveChain()) {
+		if (chain().findBlock(blockHash, FoundBlock().data(block))) {
+		    header = block.GetBlockHeader();
+		}
+	    }
 
         CMutableTransaction tx(*txRef);
 
