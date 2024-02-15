@@ -152,6 +152,7 @@ public:
     //! Get PoSVKernelPS.
     virtual uint64_t getPoSVKernelPS() = 0;
 
+#ifdef ENABLE_WALLET
     //! Get the total and average weights from the wallet for staking.
     virtual bool getStakeWeight(std::set<CInputCoin>& setCoins, uint64_t& nAverageWeight, uint64_t & nTotalWeight) = 0;
 
@@ -163,6 +164,7 @@ public:
 
     //! Start wallet staking.
     virtual void setStakeWallet(const std::string& walletname, bool active) = 0;
+#endif
 
     //! Get reindex.
     virtual bool getReindex() = 0;

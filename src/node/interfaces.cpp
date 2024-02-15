@@ -256,6 +256,7 @@ public:
 	    }
         return GetPoSVKernelPS(tip);
     }
+#ifdef ENABLE_WALLET
     bool getStakeWeight(std::set<CInputCoin>& setCoins, uint64_t& nAverageWeight, uint64_t& nTotalWeight) override
     {
       return GetStakeWeight(setCoins, nAverageWeight, nTotalWeight);
@@ -282,6 +283,7 @@ public:
         }
     }
     bool getStakingActive() override { return m_context->stakeman && m_context->stakeman->GetStakingActive(); }
+#endif
     bool getReindex() override { return ::fReindex; }
     bool getImporting() override { return ::fImporting; }
     void setNetworkActive(bool active) override
