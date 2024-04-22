@@ -49,6 +49,10 @@ public Q_SLOTS:
     void reject() override;
     void accept() override;
 
+protected:
+    /** So that it updates icons */
+    void changeEvent(QEvent* e) override;
+
 private:
     Ui::ReceiveCoinsDialog *ui;
     WalletModel *model;

@@ -8,6 +8,7 @@
 
 #include <amount.h>
 
+#include <QPushButton>
 #include <QStackedWidget>
 
 class ClientModel;
@@ -24,6 +25,7 @@ class AddressBookPage;
 QT_BEGIN_NAMESPACE
 class QModelIndex;
 class QProgressDialog;
+class QPushButton;
 QT_END_NAMESPACE
 
 /*
@@ -55,6 +57,10 @@ public:
 
     void showOutOfSyncWarning(bool fShow);
 
+protected:
+    /** So that it updates icons */
+    void changeEvent(QEvent* e) override;
+
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
@@ -66,6 +72,7 @@ private:
     SendCoinsDialog *sendCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
+    QPushButton *exportButton = nullptr;
 
     TransactionView *transactionView;
     MintingView *mintingView;

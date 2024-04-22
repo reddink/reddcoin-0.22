@@ -26,6 +26,8 @@
 #include <QLocale>
 #include <QMessageBox>
 #include <QSettings>
+#include <QStyle>
+#include <QStyleFactory>
 #include <QSystemTrayIcon>
 #include <QTimer>
 
@@ -72,6 +74,32 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     ui->proxyIpTor->setEnabled(false);
     ui->proxyPortTor->setEnabled(false);
     ui->proxyPortTor->setValidator(new QIntValidator(1, 65535, this));
+
+    const QString defaultStyleName = QApplication::style()->objectName();
+    QStringList styleNames = QStyleFactory::keys();
+
+    QDir styles(":themes");
+
+    for (const QString& styleStr : styles.entryList()) {
+        styleNames.append(styleStr);
+    }
+
+    for (int i = 1, size = styleNames.size(); i < size; ++i) {
+        if (defaultStyleName.compare(styleNames.at(i), Qt::CaseInsensitive) == 0) {
+            styleNames.swap(0, i);
+            break;
+        }
+    }
+
+    ui->style->addItem(QString("(") + tr("default") + QString(")"), QVariant(""));
+
+    for (const QString& stylename : styleNames) {
+	    ui->style->addItem(stylename, QVariant(stylename));
+    }
+
+    ui->theme->addItem(QString("(") + tr("default") + QString(")"), QVariant(""));
+    ui->theme->addItem(tr("Dark"), QVariant("dark"));
+    ui->theme->addItem(tr("Light"), QVariant("light"));
 
     connect(ui->connectSocks, &QPushButton::toggled, ui->proxyIp, &QWidget::setEnabled);
     connect(ui->connectSocks, &QPushButton::toggled, ui->proxyPort, &QWidget::setEnabled);
@@ -274,6 +302,8 @@ void OptionsDialog::setMapper()
     /* Display */
     mapper->addMapping(ui->lang, OptionsModel::Language);
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
+    mapper->addMapping(ui->style, OptionsModel::Style);
+    mapper->addMapping(ui->theme, OptionsModel::Theme);
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
     mapper->addMapping(ui->embeddedFont_radioButton, OptionsModel::UseEmbeddedMonospacedFont);
 }

@@ -914,6 +914,7 @@ void RPCConsole::changeEvent(QEvent* e)
         ui->fontBiggerButton->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/fontbigger")));
         ui->fontSmallerButton->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/fontsmaller")));
         ui->promptIcon->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/prompticon")));
+        ui->openDebugLogfileButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
 
         for (int i = 0; ICON_MAPPING[i].url; ++i) {
             ui->messagesWidget->document()->addResource(

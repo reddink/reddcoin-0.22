@@ -60,6 +60,8 @@ public:
         DisplayUnit,            // BitcoinUnits::Unit
         ThirdPartyTxUrls,       // QString
         Language,               // QString
+        Style,                  // QString
+        Theme,                  // QString
         UseEmbeddedMonospacedFont, // bool
         CoinControlFeatures,    // bool
         ThreadsScriptVerif,     // int
@@ -81,6 +83,10 @@ public:
     bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     /** Updates current unit in memory, settings and emits displayUnitChanged(newUnit) signal */
     void setDisplayUnit(const QVariant &value);
+    /** Updates current theme and emits uiThemeChanged(newTheme) signal */
+    void setUITheme(const QVariant &value);
+    /** Updates current style and emits uiStyleChanged(newStyle) signal */
+    void setUIStyle(const QVariant &value);
 
     /* Explicit getters */
     bool getShowTrayIcon() const { return m_show_tray_icon; }
@@ -91,6 +97,8 @@ public:
     bool getUseEmbeddedMonospacedFont() const { return m_use_embedded_monospaced_font; }
     bool getCoinControlFeatures() const { return fCoinControlFeatures; }
     const QString& getOverriddenByCommandLine() { return strOverriddenByCommandLine; }
+    QString getTheme() const { return strTheme; }
+    QString getStyle() const { return strStyle; }
 
     /* Explicit setters */
     void SetPruneEnabled(bool prune, bool force = false);
@@ -110,6 +118,8 @@ private:
     bool fMinimizeToTray;
     bool fMinimizeOnClose;
     QString language;
+    QString strTheme;
+    QString strStyle;
     int nDisplayUnit;
     QString strThirdPartyTxUrls;
     bool m_use_embedded_monospaced_font;
@@ -127,6 +137,8 @@ Q_SIGNALS:
     void coinControlFeaturesChanged(bool);
     void showTrayIconChanged(bool);
     void useEmbeddedMonospacedFontChanged(bool);
+    void uiThemeChanged(QString themeName);
+    void uiStyleChanged(QString styleName);
 };
 
 #endif // BITCOIN_QT_OPTIONSMODEL_H

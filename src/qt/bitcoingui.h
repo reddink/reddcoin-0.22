@@ -373,6 +373,10 @@ public Q_SLOTS:
     void showProgress(const QString &title, int nProgress);
 
     void showModalOverlay();
+
+    void updateStyle(const QString &styleName);
+
+    void updateTheme(const QString &themeName);
 };
 
 class UnitDisplayStatusBarControl : public QLabel
