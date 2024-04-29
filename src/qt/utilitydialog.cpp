@@ -12,6 +12,7 @@
 #include <qt/forms/ui_helpmessagedialog.h>
 
 #include <qt/guiutil.h>
+#include <qt/networkstyle.h>
 
 #include <clientversion.h>
 #include <init.h>
@@ -31,7 +32,7 @@
 #include <QVBoxLayout>
 
 /** "Help message" or "About" dialog box */
-HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about, bool checkUpdates) :
+HelpMessageDialog::HelpMessageDialog(QWidget *parent, const NetworkStyle* networkStyle, bool about, bool checkUpdates) :
     QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::HelpMessageDialog)
 {
@@ -49,6 +50,11 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about, bool checkUpda
         ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         ui->aboutMessage->setWordWrap(true);
         ui->helpMessage->setVisible(false);
+        if(networkStyle) {
+            const QSize requiredSize(1024,1024);
+            QPixmap icon(networkStyle->getAppIcon().pixmap(requiredSize));
+            ui->aboutLogo->setPixmap(icon);
+        }
 
         if (about) {
             resize(780, 400);

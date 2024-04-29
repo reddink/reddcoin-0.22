@@ -9,6 +9,8 @@
 #include <QDialog>
 #include <QWidget>
 
+class NetworkStyle;
+
 QT_BEGIN_NAMESPACE
 class QMainWindow;
 QT_END_NAMESPACE
@@ -23,7 +25,7 @@ class HelpMessageDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit HelpMessageDialog(QWidget *parent, bool about, bool checkUpdates);
+    explicit HelpMessageDialog(QWidget *parent, const NetworkStyle *networkStyle, bool about, bool checkUpdates);
     ~HelpMessageDialog();
 
     void printToConsole();
