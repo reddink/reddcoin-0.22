@@ -98,6 +98,8 @@ void OptionsModel::Init(bool resetSettings)
         settings.setValue("bPrune", false);
     if (!settings.contains("nPruneSize"))
         settings.setValue("nPruneSize", DEFAULT_PRUNE_TARGET_GB);
+    if (settings.value("bPrune").toBool()) // Reddcoin does not support blockchain pruning, disable if previously enabled
+        settings.setValue("bPrune", false);
     SetPruneEnabled(settings.value("bPrune").toBool());
 
     if (!settings.contains("nDatabaseCache"))
