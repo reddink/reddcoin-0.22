@@ -59,6 +59,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QPainter>
 #include <QProgressDialog>
 #include <QScreen>
 #include <QSettings>
@@ -667,10 +668,16 @@ void BitcoinGUI::createMenuBar()
 
 void BitcoinGUI::createToolBars()
 {
-    if(walletFrame)
-    {
+    if (walletFrame) {
+        // add a label containing the merged AppIcon and Name as the first element on toolbar
+        imageLogo = new QLabel();
+        imageLogo->setPixmap(createLogo());
+        imageLogo->setObjectName("logo");
+        imageLogo->setMaximumWidth(100);
+
         QToolBar *toolbar = addToolBar(tr("Tabs toolbar"));
         appToolBar = toolbar;
+        toolbar->addWidget(imageLogo);
         toolbar->setMovable(false);
         toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         toolbar->addAction(overviewAction);
@@ -915,6 +922,29 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     openAction->setEnabled(enabled);
     m_close_wallet_action->setEnabled(enabled);
     m_close_all_wallets_action->setEnabled(enabled);
+}
+
+QPixmap BitcoinGUI::createLogo()
+{
+    // add a label containing the merged AppIcon and Name as first element on toolbar
+    const QSize toolbarIconSize(120, 32);
+    QPixmap logo(toolbarIconSize);
+    logo.fill(Qt::transparent);
+
+    QPainter pixPaint(&logo);
+
+    QImage logoname(platformStyle->SingleColorImage(QStringLiteral(":/images/logo")));
+    logoname = logoname.scaled(QSize(54, 32), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    // draw the bitcoin icon, expected size of PNG: 1024x1024
+    QRect rectIcon1(QPoint(0, 0), QSize(32, 32));
+    // add the name icon following
+    QRect rectIcon2(QPoint(33, 0), QSize(54, 32));
+
+    pixPaint.drawPixmap(rectIcon1, m_network_style->getAppIcon().pixmap(QSize(32, 32)));
+    pixPaint.drawImage(rectIcon2, logoname);
+
+    return logo;
 }
 
 void BitcoinGUI::createTrayIcon()
@@ -1368,6 +1398,7 @@ void BitcoinGUI::changeEvent(QEvent *e)
         receiveCoinsAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/receiving_addresses")));
         historyAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/history")));
         mintingAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/staking")));
+        imageLogo->setPixmap(createLogo());
     }
 
     QMainWindow::changeEvent(e);

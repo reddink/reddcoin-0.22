@@ -141,6 +141,7 @@ private:
     GUIUtil::ClickableLabel* labelStakingIcon = nullptr;
     GUIUtil::ClickableLabel* walletstakingStatusControl = nullptr;
     GUIUtil::ClickableLabel* nodestakingStatusControl = nullptr;
+    QLabel* imageLogo = nullptr;
     QLabel* progressBarLabel = nullptr;
     GUIUtil::ClickableProgressBar* progressBar = nullptr;
     QProgressDialog* progressDialog = nullptr;
@@ -227,6 +228,8 @@ private:
     void createTrayIcon();
     /** Create system tray menu (or setup the dock menu) */
     void createTrayIconMenu();
+    /** Create the logo for the toolbar */
+    QPixmap createLogo();
 
     /** Enable or disable all wallet-related actions */
     void setWalletActionsEnabled(bool enabled);
