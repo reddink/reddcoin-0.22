@@ -403,6 +403,10 @@ void BitcoinGUI::createActions()
     unlockWalletAction->setStatusTip(tr("Unlock wallet"));
     lockWalletAction = new QAction(tr("&Lock Wallet"), this);
     lockWalletAction->setStatusTip(tr("Lock wallet"));
+    enableStakingAction = new QAction(tr("&Enable Staking"), this);
+    enableStakingAction->setStatusTip(tr("Enable wallet staking"));
+    disableStakingAction = new QAction(tr("&Disable Staking"), this);
+    disableStakingAction->setStatusTip(tr("Disable wallet staking"));
     signMessageAction = new QAction(tr("Sign &message…"), this);
     signMessageAction->setStatusTip(tr("Sign messages with your Reddcoin addresses to prove you own them"));
     verifyMessageAction = new QAction(tr("&Verify message…"), this);
@@ -497,6 +501,9 @@ void BitcoinGUI::createActions()
         connect(changePassphraseAction, &QAction::triggered, walletFrame, &WalletFrame::changePassphrase);
         connect(unlockWalletAction, &QAction::triggered, walletFrame, &WalletFrame::unlockWallet);
         connect(lockWalletAction, &QAction::triggered, walletFrame, &WalletFrame::lockWallet);
+        connect(enableStakingAction, &QAction::triggered, [this]{ walletFrame->enableStaking(true); });
+        connect(disableStakingAction, &QAction::triggered, [this]{ walletFrame->enableStaking(false); });
+
         connect(signMessageAction, &QAction::triggered, [this]{ showNormalIfMinimized(); });
         connect(signMessageAction, &QAction::triggered, [this]{ gotoSignMessageTab(); });
         connect(m_load_psbt_action, &QAction::triggered, [this]{ gotoLoadPSBT(); });
@@ -592,6 +599,9 @@ void BitcoinGUI::createMenuBar()
         settings->addAction(changePassphraseAction);
         settings->addAction(unlockWalletAction);
         settings->addAction(lockWalletAction);
+        settings->addSeparator();
+        settings->addAction(enableStakingAction);
+        settings->addAction(disableStakingAction);
         settings->addSeparator();
         settings->addAction(m_mask_values_action);
         settings->addSeparator();
@@ -915,6 +925,8 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     changePassphraseAction->setEnabled(enabled);
     unlockWalletAction->setEnabled(enabled);
     lockWalletAction->setEnabled(enabled);
+    enableStakingAction->setEnabled(enabled);
+    disableStakingAction->setEnabled(enabled);
     signMessageAction->setEnabled(enabled);
     verifyMessageAction->setEnabled(enabled);
     usedSendingAddressesAction->setEnabled(enabled);
@@ -1599,6 +1611,9 @@ void BitcoinGUI::setWalletStakingActive(bool staking_active)
 {
     qDebug() << QString("BitcoinGUI::%1: Staking updated to %2").arg(__func__).arg(staking_active);
     updateWalletStakingStatus();
+
+    enableStakingAction->setVisible(!staking_active);
+    disableStakingAction->setVisible(staking_active);
 
     m_wallet_staking_context_menu->clear();
     m_wallet_staking_context_menu->addAction(
