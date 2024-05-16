@@ -169,6 +169,8 @@ private:
     QAction* changePassphraseAction = nullptr;
     QAction* unlockWalletAction = nullptr;
     QAction* lockWalletAction = nullptr;
+    QAction* enableStakingAction = nullptr;
+    QAction* disableStakingAction = nullptr;
     QAction* aboutQtAction = nullptr;
     QAction* openRPCConsoleAction = nullptr;
     QAction* openAction = nullptr;
