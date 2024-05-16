@@ -52,7 +52,7 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     QHBoxLayout *hbox_buttons = new QHBoxLayout();
     transactionView = new TransactionView(platformStyle, this);
     vbox->addWidget(transactionView);
-    QPushButton *exportButton = new QPushButton(tr("&Export"), this);
+    exportButton = new QPushButton(tr("&Export"), this);
     exportButton->setToolTip(tr("Export the data in the current tab to a file"));
     if (platformStyle->getImagesOnButtons()) {
         exportButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
@@ -409,4 +409,13 @@ void WalletView::showProgress(const QString &title, int nProgress)
             progressDialog->setValue(nProgress);
         }
     }
+}
+
+void WalletView::changeEvent(QEvent* e)
+{
+    if (e->type() == QEvent::PaletteChange) {
+        exportButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
+    }
+
+    QStackedWidget::changeEvent(e);
 }

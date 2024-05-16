@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QImage>
 #include <QPalette>
+#include <QStyle>
 
 static const struct {
     const char *platformId;
@@ -135,3 +136,67 @@ const PlatformStyle *PlatformStyle::instantiate(const QString &platformId)
     return nullptr;
 }
 
+void PlatformStyle::SetTheme(const QString& themeName) const
+{
+    QPalette palette;
+
+    if (themeName == "") {
+        palette = QApplication::style()->standardPalette();
+
+    } else if (themeName == "dark") {
+        QPalette darkPalette;
+        // modify palette to dark
+        darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
+        darkPalette.setColor(QPalette::WindowText, Qt::white);
+        darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(127, 127, 127));
+        darkPalette.setColor(QPalette::Base, QColor(42, 42, 42));
+        darkPalette.setColor(QPalette::AlternateBase, QColor(66, 66, 66));
+        darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
+        darkPalette.setColor(QPalette::ToolTipText, QColor(53, 53, 53));
+        darkPalette.setColor(QPalette::Text, Qt::white);
+        darkPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(127, 127, 127));
+        darkPalette.setColor(QPalette::Dark, QColor(35, 35, 35));
+        darkPalette.setColor(QPalette::Shadow, QColor(20, 20, 20));
+        darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
+        darkPalette.setColor(QPalette::ButtonText, Qt::white);
+        darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(127, 127, 127));
+        darkPalette.setColor(QPalette::BrightText, Qt::red);
+        darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+        darkPalette.setColor(QPalette::Highlight, QColor(255, 147, 51));
+        darkPalette.setColor(QPalette::Disabled, QPalette::Highlight, QColor(80, 80, 80));
+        // darkPalette.setColor(QPalette::HighlightedText, Qt::white);
+        darkPalette.setColor(QPalette::HighlightedText, Qt::black);
+        darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
+
+        palette = darkPalette;
+    }
+
+    else if (themeName == "light") {
+        QPalette lightPalette;
+        // modify palette to light
+        lightPalette = QApplication::style()->standardPalette();
+        lightPalette.setColor(QPalette::Window, QColor(240, 240, 240));
+        lightPalette.setColor(QPalette::WindowText, QColor(0, 0, 0));
+        lightPalette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(120, 120, 120));
+        lightPalette.setColor(QPalette::Base, QColor(255, 255, 255));
+        lightPalette.setColor(QPalette::AlternateBase, QColor(233, 231, 227));
+        lightPalette.setColor(QPalette::ToolTipBase, QColor(255, 255, 220));
+        lightPalette.setColor(QPalette::ToolTipText, QColor(0, 0, 0));
+        lightPalette.setColor(QPalette::Text, QColor(0, 0, 0));
+        lightPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(120, 120, 120));
+        lightPalette.setColor(QPalette::Dark, QColor(160, 160, 160));
+        lightPalette.setColor(QPalette::Shadow, QColor(105, 105, 105));
+        lightPalette.setColor(QPalette::Button, QColor(240, 240, 240));
+        lightPalette.setColor(QPalette::ButtonText, QColor(0, 0, 0));
+        lightPalette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(120, 120, 120));
+        lightPalette.setColor(QPalette::BrightText, QColor(0, 0, 255));
+        lightPalette.setColor(QPalette::Link, QColor(51, 153, 255));
+        lightPalette.setColor(QPalette::Highlight, QColor(0, 0, 255));
+        lightPalette.setColor(QPalette::Disabled, QPalette::Highlight, QColor(51, 153, 255));
+        lightPalette.setColor(QPalette::HighlightedText, QColor(255, 255, 255));
+        lightPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(255, 255, 255));
+
+        palette = lightPalette;
+    }
+    QApplication::setPalette(palette);
+}

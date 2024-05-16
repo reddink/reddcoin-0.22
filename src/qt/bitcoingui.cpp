@@ -53,6 +53,7 @@
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDragEnterEvent>
+#include <QFile>
 #include <QListWidget>
 #include <QMenu>
 #include <QMenuBar>
@@ -762,6 +763,10 @@ void BitcoinGUI::setClientModel(ClientModel *_clientModel, interfaces::BlockAndH
             // initialize the disable state of the tray icon with the current value in the model.
             trayIcon->setVisible(optionsModel->getShowTrayIcon());
         }
+        connect(optionsModel, &OptionsModel::uiStyleChanged, this, &BitcoinGUI::updateStyle);
+        updateStyle(optionsModel->getStyle());
+        connect(optionsModel, &OptionsModel::uiThemeChanged, this, &BitcoinGUI::updateTheme);
+        updateTheme(optionsModel->getTheme());
     } else {
         // Disable possibility to show main window via action
         toggleHideAction->setEnabled(false);
@@ -1362,6 +1367,7 @@ void BitcoinGUI::changeEvent(QEvent *e)
         sendCoinsAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/send")));
         receiveCoinsAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/receiving_addresses")));
         historyAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/history")));
+        mintingAction->setIcon(platformStyle->SingleColorIcon(QStringLiteral(":/icons/staking")));
     }
 
     QMainWindow::changeEvent(e);
@@ -1783,6 +1789,21 @@ void BitcoinGUI::showModalOverlay()
         modalOverlay->toggleVisibility();
 }
 
+void BitcoinGUI::updateTheme(const QString& themeName)
+{
+    platformStyle->SetTheme(themeName);
+}
+
+void BitcoinGUI::updateStyle(const QString& styleName)
+{
+    QFile styleFile(":/themes/" + styleName);
+    if (!styleFile.open(QFile::ReadOnly)) {
+        return;
+    }
+    QString styleSheet = QLatin1String(styleFile.readAll());
+    this->setStyleSheet(styleSheet);
+}
+
 static bool ThreadSafeMessageBox(BitcoinGUI* gui, const bilingual_str& message, const std::string& caption, unsigned int style)
 {
     bool modal = (style & CClientUIInterface::MODAL);
@@ -1844,7 +1865,9 @@ UnitDisplayStatusBarControl::UnitDisplayStatusBarControl(const PlatformStyle *pl
     }
     setMinimumSize(max_width, 0);
     setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    setStyleSheet(QString("QLabel { color : %1 }").arg(m_platform_style->SingleColor().name()));
+    QPalette palette;
+    palette.setColor(QPalette::WindowText, m_platform_style->SingleColor());
+    setPalette(palette);
 }
 
 /** So that it responds to button clicks */
@@ -1856,10 +1879,9 @@ void UnitDisplayStatusBarControl::mousePressEvent(QMouseEvent *event)
 void UnitDisplayStatusBarControl::changeEvent(QEvent* e)
 {
     if (e->type() == QEvent::PaletteChange) {
-        QString style = QString("QLabel { color : %1 }").arg(m_platform_style->SingleColor().name());
-        if (style != styleSheet()) {
-            setStyleSheet(style);
-        }
+        QPalette palette;
+        palette.setColor(QPalette::WindowText, m_platform_style->SingleColor());
+        setPalette(palette);
     }
 
     QLabel::changeEvent(e);

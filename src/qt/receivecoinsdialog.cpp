@@ -316,3 +316,15 @@ void ReceiveCoinsDialog::copyAmount()
 {
     copyColumnToClipboard(RecentRequestsTableModel::Amount);
 }
+
+void ReceiveCoinsDialog::changeEvent(QEvent* e)
+{
+    if (e->type() == QEvent::PaletteChange) {
+        ui->clearButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+        ui->receiveButton->setIcon(platformStyle->SingleColorIcon(":/icons/receiving_addresses"));
+        ui->showRequestButton->setIcon(platformStyle->SingleColorIcon(":/icons/edit"));
+        ui->removeRequestButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+    }
+
+    QDialog::changeEvent(e);
+}

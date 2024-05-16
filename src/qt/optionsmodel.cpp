@@ -85,6 +85,14 @@ void OptionsModel::Init(bool resetSettings)
         settings.setValue("fCoinControlFeatures", false);
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
 
+    if (!settings.contains("strTheme"))
+        settings.setValue("strTheme", "");
+    strTheme = settings.value("strTheme").toString();
+
+    if (!settings.contains("strStyle"))
+        settings.setValue("strStyle", "");
+    strStyle = settings.value("strStyle").toString();
+
     // These are shared with the core or have a command-line parameter
     // and we want command-line parameters to overwrite the GUI settings.
     //
@@ -350,6 +358,10 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return strThirdPartyTxUrls;
         case Language:
             return settings.value("language");
+        case Theme:
+            return strTheme;
+        case Style:
+            return strStyle;
         case UseEmbeddedMonospacedFont:
             return m_use_embedded_monospaced_font;
         case CoinControlFeatures:
@@ -491,6 +503,12 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
+        case Theme:
+            setUITheme(value);
+            break;
+        case Style:
+            setUIStyle(value);
+            break;
         case UseEmbeddedMonospacedFont:
             m_use_embedded_monospaced_font = value.toBool();
             settings.setValue("UseEmbeddedMonospacedFont", m_use_embedded_monospaced_font);
@@ -553,6 +571,27 @@ void OptionsModel::setDisplayUnit(const QVariant &value)
     }
 }
 
+void OptionsModel::setUITheme(const QVariant &value)
+{
+    if (!value.isNull())
+    {
+        QSettings settings;
+        strTheme = value.toString();
+        settings.setValue("strTheme", strTheme);
+        Q_EMIT uiThemeChanged(strTheme);
+    }
+}
+
+void OptionsModel::setUIStyle(const QVariant &value)
+{
+    if (!value.isNull())
+    {
+        QSettings settings;
+        strStyle = value.toString();
+        settings.setValue("strStyle", strStyle);
+        Q_EMIT uiStyleChanged(strStyle);
+    }
+}
 void OptionsModel::setRestartRequired(bool fRequired)
 {
     QSettings settings;
